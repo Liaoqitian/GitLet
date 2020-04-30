@@ -1,0 +1,4 @@
+We started working on the project once it was first released,
+however, due to the time constrain and the limited office hours we were provided,
+we still were unable to pass all our tests.
+Thus, we ask for an extension to continue trying our best to debug.  
