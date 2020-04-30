@@ -41,7 +41,6 @@ public class Main {
                      new ObjectInputStream(new FileInputStream(Command.containerDir))) {
             container = (Container) in.readObject();
         } catch (IOException | ClassNotFoundException e) {
-//            System.out.println("error load");
             container = null;
         }
         return container;

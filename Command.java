@@ -120,7 +120,6 @@ public class Command {
         } else {
             /* Create the .gitlet directory */
             saDir.mkdirs();
-            //containerDir.mkdirs();
             String currentTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
             String id = Utils.sha1("initial commit", currentTime);
             Commit initial = new Commit("initial commit", currentTime,
@@ -158,18 +157,6 @@ public class Command {
                         return;
                     }
                 }
-//                    container.unstage(workingDFile);
-//                System.out.println(container.currPointer.latestID(s)); //expe
-//                System.out.println(container.stagingArea.get(s)); //expe
-//                System.out.println(container.currPointer.filesMap.containsKey(s));
-
-//                if (container.currPointer.filesMap.containsKey(s)) {
-//                    byte[] wDFileContent = Utils.readContents(workingDFile);
-//                    File cFile = new File(GITLETDIR, container.currPointer.latestID(s));
-//                    byte[] cFileContent = Utils.readContents(cFile);
-//                    if (Arrays.equals(wDFileContent, cFileContent)) {
-//                        container.stagingArea.remove(s);
-//                    }
             }
         }
     }
@@ -218,12 +205,12 @@ public class Command {
             }
         }
         Map<String, String> newFilesMap = new HashMap<>();
-        for (String filename : container.currPointer.filesMap.keySet()) {
+        for (String filename: container.currPointer.filesMap.keySet()) {
             if (!container.stagedUntracked.contains(filename)) {
                 newFilesMap.put(filename, container.currPointer.filesMap.get(filename));
             }
         }
-        for (String filename : container.stagingArea.keySet()) {
+        for (String filename: container.stagingArea.keySet()) {
             newFilesMap.put(filename, container.stagingArea.get(filename));
         }
         int ind = container.committed.size() - 1;
@@ -293,7 +280,6 @@ public class Command {
             System.out.println("===");
             pointer.print();
             System.out.println();
-            //if(pointer.parent == null) break;
             pointer = pointer.parent;
         }
         System.out.println("===");
@@ -358,9 +344,6 @@ public class Command {
         if (container.recentUntracked != null) {
             List<String> orderedRemoved = new ArrayList<>(container.recentUntracked);
             Collections.sort(orderedRemoved);
-//            Set<String> removedFiles = container.recentUntracked;
-//            List<String> orderedRemoved = removedFiles.stream().
-//                    sorted((o1, o2) -> o1.compareTo(o2)).collect(Collectors.toList());
             for (String s : orderedRemoved) {
                 System.out.println(s);
             }
@@ -468,8 +451,6 @@ public class Command {
         File toCheckout = null;
         for (String filename : container.commitMap.get(id).filesMap.keySet()) {
             if (filename.equals(argu[2])) {
-                // toCheckout = Utils.join(GITLETDIR,
-                // container.currPointer.filesMap.get(filename));
                 toCheckout = new File(GITLETDIR,
                         container.commitMap.get(id).filesMap.get(filename));
                 break;
@@ -540,7 +521,6 @@ public class Command {
         for (String a : container.branchMap.get(branchName).filesMap.keySet()) {
             File toUnStage = new File(GITLETDIR, container.branchMap.
                     get(branchName).filesMap.get(a));
-//            container.unstage(toUnStage);
             // append current file name to the working directory
             File checkedFile = new File(curDir, a);
             // create a new empty file inside current new file
@@ -612,27 +592,6 @@ public class Command {
         // remove tracked files not present in the given commit
         // check out files in the given commit
         // move head pointer to the given commit
-//        String correspBranch = null;
-//        for (String s: container.branchMap.keySet()) {
-//            if (container.branchMap.get(s).equals(correspCommit)) {
-//                correspBranch = s;
-//                if (container.currPointer.equals(container.branchMap.get(correspBranch))) {
-//                    return;
-//                }
-//            }
-//        }
-//        if (correspBranch == null) {
-//            for (String s : container.branchMap.keySet()) {
-//                if (container.isAncestor(container.branchMap.get(s), correspCommit)) {
-//                    correspBranch = s;
-//                    container.branchMap.put(correspBranch, correspCommit);
-//                    break;
-//                }
-//            }
-//        }
-//        if (correspBranch == null) {
-//            System.out.println("can't find corresponding pointer");
-//        }
         container.branchMap.put(container.currBranch, correspCommit);
         Command newCommand = new Command(new String[]{"checkout", container.currBranch});
         newCommand.execute(container);

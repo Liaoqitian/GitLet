@@ -80,11 +80,4 @@ public class Commit implements Serializable {
         System.out.println(timeStamp);
         System.out.println(message);
     }
-
-    //public boolean equals(Commit c) {
-    //    return this.message.equals(c.message) && this.files.equals(c.files)
-    //            && this.filesMap.equals(c.filesMap) && this.id.equals(c.id)
-    //            && this.parent.equals(c.parent) && this.sibling.equals(c.sibling)
-    //            && this.timeStamp.equals(c.timeStamp);
-    //}
 }

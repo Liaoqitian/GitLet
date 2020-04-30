@@ -123,13 +123,6 @@ public class Container implements Serializable {
 
     /* Untrack the file from the staging area. */
     public void untrack(String fileName) {
-//        String toUnTrack = "";
-//        for (String name: stagingArea.keySet()) {
-//            if (name.equals(fileName)) {
-//                toUnTrack = name;
-//                break;
-//            }
-//        }
         stagingArea.remove(fileName);
         stagedUntracked.add(fileName);
         recentUntracked.add(fileName);
@@ -170,9 +163,6 @@ public class Container implements Serializable {
         Commit tempC2 = c2;
         int count1 = 0;
         int count2 = 0;
-//        if(c1.parent.id.equals(c2.parent.id)) {
-//            return c1.parent;
-//        }
         while (tempC1.parent != null) {
             count1 += 1;
             tempC1 = tempC1.parent;
@@ -213,50 +203,6 @@ public class Container implements Serializable {
     /* Find the split point of two Commit objects,
      * assuming that the two commit objects are in difference
      * branches and are not necessarily first cousins. */
-//    public Commit ancestor(Commit c1, Commit c2) {
-//        Set<String> anSet1 = new HashSet<>();
-//        Set<String> anSet2 = new HashSet<>();
-//        Commit tempC1 = c1;
-//        Commit tempC2 = c2;
-//        Commit pa1 = null;
-//        Commit pa2 = null;
-//        if (ancestorHelper(tempC1) == null && ancestorHelper(tempC2) == null) {
-//            if(committed.indexOf(tempC1) < committed.indexOf(tempC2)) {
-//                return tempC1;
-//            }
-//            return tempC2;
-//        }
-//        while (ancestorHelper(tempC1) != null || ancestorHelper(tempC2) != null) {
-//            pa1 = ancestorHelper(tempC1);
-//            anSet1.add(pa1.id);
-//            tempC1 = pa1;
-//            if (anSet2.contains(pa1.id)) {
-//                return pa1;
-//            }
-//            pa2 = ancestorHelper(tempC2);
-//            anSet2.add(pa2.id);
-//            tempC2 = pa2;
-//            if (anSet1.contains(pa2.id)) {
-//                return pa2;
-//            }
-//        }
-//        return committed.get(0);
-//    }
-//
-//    /* Helper function, find the latest ancestor (split point) and return its SHA-1. */
-//    private Commit ancestorHelper(Commit c) {
-//        Commit pa = null;
-//        Commit tempC = c;
-//        while (tempC.parent != null && tempC.parent.sibling == null) {
-//            tempC = tempC.parent;
-//            if (tempC.sibling != null) {
-//                pa = tempC.parent;
-//                break;
-//            }
-//        }
-//        return pa;
-//    }
-
     public boolean isAncestor(Commit c, Commit a) {
         Commit tempC = c;
         while (tempC.parent != null) {
