@@ -61,7 +61,7 @@ public class Command {
             if (argu == null) {
                 throw new IllegalArgumentException();
             }
-            rm(container);
+            remove(container);
         } else if (commandor.equals("log")) {
             if (argu != null) {
                 throw new IllegalArgumentException();
@@ -256,7 +256,7 @@ public class Command {
     /* If the file is neither in stagingArea nor tracked by the current commit, print error message
      * if it is tracked by the current commit, untrack it and delete the file from repository;
      * if it is staged, unstage it. */
-    public void rm(Container container) {
+    public void remove(Container container) {
         for (String filename : argu) {
             File currFile = new File(filename);
             Boolean trackedByCurrCommit = container.currPointer.filesMap.containsKey(filename);

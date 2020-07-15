@@ -47,31 +47,26 @@ public class Commit implements Serializable {
 
     /* Returns the timestamp. */
     public String getTimeStamp() {
-
         return timeStamp;
     }
 
     /* Returns the parent's id. */
     public Commit getParent() {
-
         return parent;
     }
 
     /* Returns the list of files. */
     public ArrayList<File> getFile() {
-
         return files;
     }
 
     /* Returns the commit id. */
     public String getID() {
-
         return id;
     }
 
     /* Returns the commit id. */
     public String latestID(String filename) {
-
         return filesMap.get(filename);
     }
 

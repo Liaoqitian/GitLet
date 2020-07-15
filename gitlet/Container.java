@@ -45,9 +45,9 @@ public class Container implements Serializable {
      * modify branchMap and currPointer. */
     public Container(Commit initCommit) {
         this.firstCommit = initCommit;
-        this.committed = new ArrayList<>();
+        this.committed = new ArrayList<Commit>();
         this.committed.add(initCommit);
-        this.branchMap = new HashMap<>();
+        this.branchMap = new HashMap<String, Commit>();
         this.branchMap.put("master", initCommit);
         this.currPointer = initCommit;
         this.currBranch = "master";
@@ -65,31 +65,26 @@ public class Container implements Serializable {
 
     /* Returns a list of branches. */
     public Set<String> getBranches() {
-
         return branchMap.keySet();
     };
 
     /* Returns the list of committed files represented by SHA. */
     public ArrayList<Commit> getCommitted() {
         return committed;
-        // May need modification.
     }
 
     /* Returns the map of staged files. */
     public Map<String, String> getStaged() {
-
         return stagingArea;
     };
 
     /* Add a new branch with specified name. */
     public void addBranch(String name) {
-
         branchMap.put(name, branchMap.get(getCurrPointer()));
     };
 
     /* Removes the specified branch. */
     public void rmBranch(String name) {
-
         branchMap.remove(name);
     }
 
@@ -198,11 +193,6 @@ public class Container implements Serializable {
         return firstCommit;
     }
 
-
-
-    /* Find the split point of two Commit objects,
-     * assuming that the two commit objects are in difference
-     * branches and are not necessarily first cousins. */
     public boolean isAncestor(Commit c, Commit a) {
         Commit tempC = c;
         while (tempC.parent != null) {
