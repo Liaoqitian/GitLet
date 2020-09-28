@@ -13,30 +13,28 @@ import java.util.Collections;
 
 public class Container implements Serializable {
     /* The commit object which the current branch points to. */
-    public Commit currPointer;
+    public Commit currCommit;
 
-    /* The current branch */
+    /* current branch */
     public String currBranch;
 
-    /* A map that takes branch name and its head pointer. */
+    /* Maps branch name to its head commit. */
     public Map<String, Commit> branchMap;
 
-    /* An arraylist of commit objects. */
+    /* An arraylist of committed objects. */
     public ArrayList<Commit> committed;
 
-    /* A map that takes SHA-1 of commit object. */
+    /* Maps SHA-1 to commit object. */
     public Map<String, Commit> commitMap;
 
-    /* A map of filename and SHA-1 for staged files. */
+    /* Maps file name of staged files to SHA-1. */
     public Map<String, String> stagingArea;
 
-    /* A map that links SHA-1 to actual file name. */
+    /* Maps SHA-1 to file name. */
     public Map<String, String> shaNameMap;
 
-    /* A set of name of files that is now untracked. */
-    public Set<String> stagedUntracked;
-
-    public Set<String> recentUntracked;
+    /* A set of file names that are untracked. */
+    public Set<String> untracked;
 
     public Commit firstCommit;
 
@@ -49,18 +47,17 @@ public class Container implements Serializable {
         this.committed.add(initCommit);
         this.branchMap = new HashMap<String, Commit>();
         this.branchMap.put("master", initCommit);
-        this.currPointer = initCommit;
+        this.currCommit = initCommit;
         this.currBranch = "master";
         this.commitMap = new HashMap<>();
         this.stagingArea = new HashMap<>();
         this.shaNameMap = new HashMap<>();
-        this.stagedUntracked = new HashSet<>();
-        this.recentUntracked = new HashSet<>();
+        this.untracked = new HashSet<>();
     }
 
     /* Returns the current pointer. */
     public Commit getCurrPointer() {
-        return currPointer;
+        return currCommit;
     }
 
     /* Returns a list of branches. */
@@ -90,7 +87,7 @@ public class Container implements Serializable {
 
     /* Change to the specified branch. */
     public void changeBranch(String name) {
-        currPointer = branchMap.get(name);
+        currCommit = branchMap.get(name);
         currBranch = name;
     }
 
@@ -98,7 +95,6 @@ public class Container implements Serializable {
     public void stage(File file) {
         if (file != null) {
             stagingArea.put(file.getName(), Utils.sha1(Utils.readContents(file)));
-            // Construct a map whose key is the filename, and the value is it corresponding sha id.
         }
     }
 
@@ -109,26 +105,19 @@ public class Container implements Serializable {
 
     /* Retrack the file. */
     public void retrack(String fileName) {
-
-        stagedUntracked.remove(fileName);
-        if (recentUntracked.contains(fileName)) {
-            recentUntracked.remove(fileName);
-        }
+        untracked.remove(fileName);
     }
 
     /* Untrack the file from the staging area. */
     public void untrack(String fileName) {
         stagingArea.remove(fileName);
-        stagedUntracked.add(fileName);
-        recentUntracked.add(fileName);
+        untracked.add(fileName);
     }
 
     /* Return true is the file is tracked. */
     public boolean tracking(String filename) {
-        if (stagedUntracked != null) {
-            return !stagedUntracked.contains(filename);
-        }
-        return true;
+        if (untracked == null) return true;
+        return !untracked.contains(filename);
     }
 
     public boolean staged(String filename) {
@@ -136,12 +125,12 @@ public class Container implements Serializable {
     }
 
     public Map<String, String> getTracked() {
-        List<Commit> headCommit = new ArrayList<Commit>();
+        List<Commit> headCommit = new ArrayList();
         for (String s: branchMap.keySet()) {
             headCommit.add(branchMap.get(s));
         }
         Collections.sort(headCommit, (o1, o2) -> o1.getTimeStamp().compareTo(o2.getTimeStamp()));
-        Map<String, String> mapF = new HashMap<String, String>();
+        Map<String, String> mapF = new HashMap();
         for (Commit com: headCommit) {
             for (String s: com.filesMap.keySet()) {
                 mapF.put(s, com.filesMap.get(s));
@@ -151,7 +140,7 @@ public class Container implements Serializable {
     }
 
     /* Find the split point of two Commit objects,
-     * assuming that the two commit objects are in difference
+     * assuming that the two commit objects are in different
      * branches and are not necessarily first cousins. */
     public Commit ancestor2(Commit c1, Commit c2) {
         Commit tempC1 = c1;
@@ -193,13 +182,12 @@ public class Container implements Serializable {
         return firstCommit;
     }
 
-    public boolean isAncestor(Commit c, Commit a) {
-        Commit tempC = c;
-        while (tempC.parent != null) {
-            if (tempC.parent.id.equals(a.id)) {
-                return true;
-            }
-            tempC = tempC.parent;
+    // checks if ancestor is an ancestor of curr
+    public boolean isAncestor(Commit curr, Commit ancestor) {
+        while (curr != null) {
+            Commit parent = curr.parent;
+            if (parent != null && parent.id.equals(ancestor.id)) return true;
+            curr = parent;
         }
         return false;
     }

@@ -17,12 +17,11 @@ import java.util.Date;
 
 public class Command {
     /* An array of string that contains parameters from terminal input. */
-    public String[] argu;
+    public String[] argument;
     /* Represents the specific command to call. */
-    public String commandor;
+    public String command;
     /* An immutable file that stands as gitlet's 'home.' */
-    public static final File GITLETDIR = new File(new File(
-            System.getProperty("user.dir")), ".gitlet");
+    public static final File GITLETDIR = new File(new File(System.getProperty("user.dir")), ".gitlet");
     /* Where the container lives. */
     public static File containerDir = new File(GITLETDIR, "container");
     /* A file that stores blobs in the staging area. */
@@ -30,126 +29,96 @@ public class Command {
 
     /* Command constructor, takes in arguments (terminal input) and split command & parameter. */
     public Command(String... args) {
-        if (args == null) {
-            throw new IllegalArgumentException("No command entered.");
-        }
-        commandor = args[0];
-        if (args.length > 1) {
-            argu = Arrays.copyOfRange(args, 1, args.length);
-        } else {
-            argu = null;
-        }
+        if (args == null) throw new IllegalArgumentException("No command entered.");
+        command = args[0];
+        if (args.length > 1) argument = Arrays.copyOfRange(args, 1, args.length);
+        else argument = null;
     }
 
     public Container execute(Container container) {
-        if (commandor.equals("init")) {
-            if (argu != null) {
-                throw new IllegalArgumentException();
-            }
-            container = init(container);
-        } else if (commandor.equals("add")) {
-            if (argu == null) {
-                throw new IllegalArgumentException();
-            }
-            add(container);
-        } else if (commandor.equals("commit")) {
-            if (argu == null || (argu != null && argu.length != 1) || argu[0].equals("")) {
-                throw new IllegalArgumentException("Please enter a commit message.");
-            }
-            commit(container);
-        } else if (commandor.equals("rm")) {
-            if (argu == null) {
-                throw new IllegalArgumentException();
-            }
-            remove(container);
-        } else if (commandor.equals("log")) {
-            if (argu != null) {
-                throw new IllegalArgumentException();
-            }
-            log(container);
-        } else if (commandor.equals("global-log")) {
-            if (argu != null) {
-                throw new IllegalArgumentException();
-            }
-            globallog(container);
-        } else if (commandor.equals("find")) {
-            if (argu == null || (argu != null && argu.length != 1)) {
-                throw new IllegalArgumentException();
-            }
-            find(container);
-        } else if (commandor.equals("status")) {
-            if (argu != null) {
-                throw new IllegalArgumentException();
-            }
-            status(container);
-        } else if (commandor.equals("checkout")) {
-            if (argu == null || (argu != null && argu.length > 3)) {
-                throw new IllegalArgumentException();
-            }
-            checkout(container);
-        } else if (commandor.equals("branch")) {
-            if (argu == null || (argu != null && argu.length != 1)) {
-                throw new IllegalArgumentException();
-            }
-            branch(container);
-        } else if (commandor.equals("rm-branch")) {
-            if (argu == null || (argu != null && argu.length != 1)) {
-                throw new IllegalArgumentException();
-            }
-            rmbranch(container);
-        } else if (commandor.equals("reset")) {
-            if (argu == null) {
-                throw new IllegalArgumentException();
-            }
-            reset(container);
-        } else if (commandor.equals("merge")) {
-            if (argu == null || (argu != null && argu.length != 1)) {
-                throw new IllegalArgumentException();
-            }
-            merge(container);
+        switch (command) {
+            case "init":
+                if (argument != null) throw new IllegalArgumentException();
+                container = init(container);
+            case "add":
+                if (argument == null) throw new IllegalArgumentException();
+                add(container);
+            case "commit":
+                if (argument == null || (argument.length != 1) || argument[0].equals(""))
+                    throw new IllegalArgumentException("Please enter a commit message.");
+                commit(container);
+            case "rm":
+                if (argument == null) throw new IllegalArgumentException();
+                remove(container);
+            case "log":
+                if (argument != null) throw new IllegalArgumentException();
+                log(container);
+            case "global-log":
+                if (argument != null) throw new IllegalArgumentException();
+                globallog(container);
+            case "find":
+                if (argument == null || argument.length != 1) throw new IllegalArgumentException();
+                find(container);
+            case "status":
+                if (argument != null) throw new IllegalArgumentException();
+                status(container);
+            case "checkout":
+                if (argument == null || argument.length > 3) throw new IllegalArgumentException();
+                checkout(container);
+            case "branch":
+                if (argument == null || argument.length != 1) throw new IllegalArgumentException();
+                branch(container);
+            case "rm-branch":
+                if (argument == null || argument.length != 1) throw new IllegalArgumentException();
+                rmbranch(container);
+            case "reset":
+                if (argument == null) throw new IllegalArgumentException();
+                reset(container);
+            case "merge":
+                if (argument == null || argument.length != 1) throw new IllegalArgumentException();
+                merge(container);
         }
         return container;
     }
 
     /* Creates a container object*/
     public Container init(Container container) {
-        /* Append "/.gitlet" to whatever path was created above. */
         if (Command.GITLETDIR.exists()) {
-            System.out.println("A gitlet version-control system already "
-                    + "exists in the current directory");
+            System.out.println("A gitlet version-control system already exists in the current directory");
         } else {
             /* Create the .gitlet directory */
             saDir.mkdirs();
             String currentTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
             String id = Utils.sha1("initial commit", currentTime);
-            Commit initial = new Commit("initial commit", currentTime,
-                    null, new ArrayList<>(), new ArrayList<>(), new HashMap<>(), id);
-            container = new Container(initial);
-            container.commitMap.put(id, initial);
+            Commit initialCommit = new Commit("initial commit", currentTime, null, new HashMap<>(), id);
+            container = new Container(initialCommit);
+            container.commitMap.put(id, initialCommit);
         }
         return container;
     }
 
+    /**
+     * Adds a copy of the file as it currently exists to the staging area (see the description of the commit command).
+     * For this reason, adding a file is also called staging the file. The staging area should be somewhere in .gitlet.
+     * If the current working version of the file is identical to the version in the current commit, do not stage it to be added.
+     * If the file had been marked to be removed (see gitlet rm), delete that mark before adding the file as usual.
+     * */
     public void add(Container container) {
-        for (String s : argu) {
+        for (String fileName: argument) {
             /* Append the file to the staging area directory */
             File currDir = new File(System.getProperty("user.dir"));
-            File workingDFile = new File(currDir, s);
-            if (!workingDFile.exists()) {
-                System.out.println("File does not exist.");
-            } else {
+            File file = new File(currDir, fileName);
+            String id = Utils.sha1(Utils.readContents(file));
+            if (!file.exists()) System.out.println("File does not exist.");
+            else {
                 /* If the file is untracked, delete the mark from set untracked. */
-                if (!container.tracking(s)) {
-                    container.retrack(s);
-                }
-                container.stage(workingDFile);
-                /* Check if the added version is identical to the version in current commit. */
-                if (container.currPointer.filesMap.containsKey(s)
-                        && container.currPointer.latestID(s).equals(container.stagingArea.get(s))) {
-                    container.stagingArea.remove(s);
-                } else {
-                    byte[] contentByte = Utils.readContents(workingDFile);
-                    File saFile = new File(saDir, container.stagingArea.get(s));
+                if (!container.tracking(fileName)) container.retrack(fileName);
+                /* Check if the added version is not identical to the version in current commit*/
+                Commit currCommit = container.currCommit;
+                if (!currCommit.checkFile(fileName) || !currCommit.getFileID(fileName).equals(id)) {
+                    container.stage(file);
+                    byte[] contentByte = Utils.readContents(file);
+                    File saFile = new File(saDir, id);
                     try {
                         saFile.createNewFile(); // Access the file in working directory
                         Utils.writeContents(saFile, contentByte);
@@ -160,106 +129,132 @@ public class Command {
             }
         }
     }
+    /** Saves a snapshot of certain files in the current commit and staging area so they can be restored at a later time,
+     * creating a new commit. The commit is said to be tracking the saved files.
+     * By default, each commit’s snapshot of files will be exactly the same as its parent commit’s snapshot of files;
+     * it will keep versions of files exactly as they are, and not update them.
+     * A commit will only update files it is tracking that have been staged at the time of commit,
+     * in which case the commit will now include the version of the file that was staged
+     * instead of the version it got from its parent.
+     * A commit will save and start tracking any files that were staged but weren’t tracked by its parent.
+     * Finally, files tracked in the current commit may be untracked in the new commit as a result of the rm command (below).
+    The bottom line: By default a commit is the same as its parent. Staged and removed files are the updates to the commit.
+    Some additional points about commit:
+    1. The staging area is cleared after a commit.
+    2. The commit command never adds, changes, or removes files in the working directory
+     (other than those in the .gitlet directory). The rm command will remove such files,
+     as well as somehow marking them to be untracked by commit.
+    3. Any changes made to files after staging or removal are ignored by the commit command,
+     which only modifies the contents of the .gitlet directory.
+     For example, if you remove a tracked file using the Unix rm command (rather than gitlet’s command of the same name),
+     it has no effect on the next commit, which will still contain the deleted version of the file.
+    4. After the commit command, the new commit is added as a new node in the commit tree.
+    5. The commit just made becomes the “current commit”, and the current branch’s head pointer now points to it.
+     The previous branch’s head commit is this commit’s parent commit.
+    6. Each commit should contain the date time it was made.
+    7. Each commit has a log message associated with it that describes the changes to the files in the commit.
+     This is specified by the user. The entire message should take up only one entry in the array args that is passed to main.
+     To include multiword messages, you’ll have to surround them in quotes.
+    8. Each commit is identified by its SHA-1 id, which must include the file (blob) references of its files,
+     parent reference, log message, and commit time.*/
 
-    /* Construct a new ArrayList of files for the upcoming commit. */
-    /* Construct a copy of the ArrayList of files of its parent. */
     public void commit(Container container) {
-        if (container.stagingArea.isEmpty() && container.recentUntracked.isEmpty()) {
+        if (container.stagingArea.isEmpty() && container.untracked.isEmpty()) {
             System.out.println("No changes added to the commit.");
             return;
         }
-        ArrayList<File> newFiles = new ArrayList<>();
-        if (container.currPointer.files != null) {
-            for (int index = 0; index < container.currPointer.files.size(); index += 1) {
-                if (container.recentUntracked.contains(container.currPointer.files.get(index))) {
-                    newFiles.add(index, container.currPointer.files.get(index));
-                }
-            }
-            List<String> newFilesName = new ArrayList<>();
-            for (int i = 0; i < newFiles.size(); i++) {
-                newFilesName.add(i, newFiles.get(i).getName());
-            }
-            for (String filename : container.stagingArea.keySet()) {
-                try {
-                    File archive = commitHelper(container, filename);
-                    if (newFilesName.contains(filename)) {
-                        newFiles.remove(new File(GITLETDIR,
-                                container.currPointer.filesMap.get(filename)));
-                    }
-                    newFiles.add(archive);
-                    container.shaNameMap.put(container.stagingArea.get(filename), filename);
-
-                } catch (IOException e) {
-                    return;
-                }
-            }
-        } else if (container.currPointer.files == null) {
-            for (String filename : container.stagingArea.keySet()) {
-                try {
-                    File archive = commitHelper(container, filename);
-                    newFiles.add(archive);
-                    container.shaNameMap.put(container.stagingArea.get(filename), filename);
-                } catch (IOException e) {
-                    return;
-                }
-            }
-        }
-        Map<String, String> newFilesMap = new HashMap<>();
-        for (String filename: container.currPointer.filesMap.keySet()) {
-            if (!container.stagedUntracked.contains(filename)) {
-                newFilesMap.put(filename, container.currPointer.filesMap.get(filename));
-            }
-        }
-        for (String filename: container.stagingArea.keySet()) {
-            newFilesMap.put(filename, container.stagingArea.get(filename));
-        }
-        int ind = container.committed.size() - 1;
-        ArrayList<String> sID = new ArrayList<>();
-        ArrayList<Commit> sibCommit = new ArrayList<>();
-        Commit temp = container.committed.get(ind);
-        while ((!temp.id.equals(container.currPointer.id)) && ind > 0) {
-            if (temp.parent.id.equals(container.currPointer.id)) {
-                sID.add(temp.id);
-                sibCommit.add(temp);
-            }
-            ind -= 1;
-            temp = container.committed.get(ind);
-        }
         String currentTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-        String id = Utils.sha1(argu[0], currentTime, container.currPointer.id);
-        Commit currCommit = new Commit(argu[0], currentTime,
-                container.currPointer, sID, newFiles, newFilesMap, id);
-        for (Commit sisterCommit : sibCommit) {
-            sisterCommit.sibling.add(currCommit.id);
+        /* Create sha-id based on commit message, timestamp, and the parent id*/
+        String id = Utils.sha1(argument[0], currentTime, container.currCommit.id);
+        Commit parentCommit = container.currCommit;
+        HashMap<String, String> filesMap = new HashMap();
+        /* Track all files in staging area */
+        for (Map.Entry<String, String> entry : container.stagingArea.entrySet()) {
+            filesMap.put(entry.getKey(), entry.getValue());
         }
-        container.currPointer = currCommit;
+        for (Map.Entry<String, String> entry : parentCommit.filesMap.entrySet()) {
+            String fileName = entry.getKey(), fileID = entry.getValue();
+            if (!container.untracked.contains(fileName) && container.stagingArea.containsKey(fileName))
+                filesMap.put(fileName, fileID);
+        }
+        Commit currCommit = new Commit(argument[0], currentTime, parentCommit, filesMap, id);
+        container.currCommit = currCommit;
         container.committed.add(currCommit);
         container.branchMap.put(container.currBranch, currCommit);
-        container.stagingArea = new HashMap<>();
-        container.recentUntracked = new HashSet<>();
+        container.stagingArea = new HashMap();
+        container.untracked = new HashSet();
         container.commitMap.put(currCommit.id, currCommit);
-        File[] fileList = saDir.listFiles();
-        for (File f : fileList) {
-            f.delete();
-        }
+        for (File file : saDir.listFiles()) file.delete();
     }
 
-    public File commitHelper(Container container, String filename) throws IOException {
-        File saFile = new File(saDir, container.stagingArea.get(filename));
-        byte[] saByte = Utils.readContents(saFile);
-        File archive = new File(GITLETDIR, container.stagingArea.get(filename));
-        archive.createNewFile();
-        Utils.writeContents(archive, saByte);
-        return archive;
-    }
+//
+//        ArrayList<File> newFiles = new ArrayList<>();
+//        if (container.currCommit.files != null) {
+//            for (int index = 0; index < container.currPointer.files.size(); index += 1) {
+//                if (container.recentUntracked.contains(container.currPointer.files.get(index))) {
+//                    newFiles.add(index, container.currPointer.files.get(index));
+//                }
+//            }
+//            List<String> newFilesName = new ArrayList<>();
+//            for (int i = 0; i < newFiles.size(); i++) {
+//                newFilesName.add(i, newFiles.get(i).getName());
+//            }
+//            for (String filename: container.stagingArea.keySet()) {
+//                try {
+//                    File archive = commitHelper(container, filename);
+//                    if (newFilesName.contains(filename)) {
+//                        newFiles.remove(new File(GITLETDIR,
+//                                container.currPointer.filesMap.get(filename)));
+//                    }
+//                    newFiles.add(archive);
+//                    container.shaNameMap.put(container.stagingArea.get(filename), filename);
+//                } catch (IOException e) { return;}
+//            }
+//        } else if (container.currPointer.files == null) {
+//            for (String filename: container.stagingArea.keySet()) {
+//                try {
+//                    File archive = commitHelper(container, filename);
+//                    newFiles.add(archive);
+//                    container.shaNameMap.put(container.stagingArea.get(filename), filename);
+//                } catch (IOException e) {
+//                    return;
+//                }
+//            }
+//        }
+
+//        int ind = container.committed.size() - 1;
+//        ArrayList<Commit> sibCommit = new ArrayList<>();
+//        Commit temp = container.committed.get(ind);
+//        while ((!temp.id.equals(container.currPointer.id)) && ind > 0) {
+//            if (temp.parent.id.equals(container.currPointer.id)) {
+//                sID.add(temp.id);
+//                sibCommit.add(temp);
+//            }
+//            ind -= 1;
+//            temp = container.committed.get(ind);
+//        }
+//
+//        for (Commit sisterCommit: sibCommit) {
+//            sisterCommit.sibling.add(currCommit.id);
+//        }
+
+//    public File commitHelper(Container container, String filename) throws IOException {
+//        File saFile = new File(saDir, container.stagingArea.get(filename));
+//        byte[] saByte = Utils.readContents(saFile);
+//        File archive = new File(GITLETDIR, container.stagingArea.get(filename));
+//        archive.createNewFile();
+//        Utils.writeContents(archive, saByte);
+//        return archive;
+//    }
+
 
     /* If the file is neither in stagingArea nor tracked by the current commit, print error message
      * if it is tracked by the current commit, untrack it and delete the file from repository;
      * if it is staged, unstage it. */
     public void remove(Container container) {
-        for (String filename : argu) {
+        for (String filename : argument) {
             File currFile = new File(filename);
-            Boolean trackedByCurrCommit = container.currPointer.filesMap.containsKey(filename);
+            Boolean trackedByCurrCommit = container.currCommit.filesMap.containsKey(filename);
             if (!container.staged(filename) && !trackedByCurrCommit) {
                 System.out.println("No reason to remove the file.");
             }
@@ -275,7 +270,7 @@ public class Command {
     /* Show information each commit backwards along the commit
      * tree from the current commit to the initial commit. */
     public void log(Container container) {
-        Commit pointer = container.currPointer;
+        Commit pointer = container.currCommit;
         while (!pointer.equals(container.firstCommit)) {
             System.out.println("===");
             pointer.print();
@@ -289,7 +284,7 @@ public class Command {
     public void globallog(Container container) {
         for (Commit com : container.getCommitted()) {
             System.out.println("===");
-            System.out.println("Commit " + com.getID());
+            System.out.println("Commit " + com.getCommitID());
             System.out.println(com.getTimeStamp());
             System.out.println(com.getMessage());
             System.out.println();
@@ -300,7 +295,7 @@ public class Command {
     public void find(Container container) {
         /* Filter out the commits. */
         List<Commit> correspCommit = container.getCommitted().stream()
-                .filter(o -> o.message.equals(argu[0])).collect(Collectors.toList());
+                .filter(o -> o.message.equals(argument[0])).collect(Collectors.toList());
         if (correspCommit.size() == 0) {
             System.out.println("Found no commit with that message.");
             return;
@@ -341,8 +336,8 @@ public class Command {
         System.out.println();
         /* Print out the removed files. */
         System.out.println("=== Removed Files ===");
-        if (container.recentUntracked != null) {
-            List<String> orderedRemoved = new ArrayList<>(container.recentUntracked);
+        if (container.untracked != null) {
+            List<String> orderedRemoved = new ArrayList<>(container.untracked);
             Collections.sort(orderedRemoved);
             for (String s : orderedRemoved) {
                 System.out.println(s);
@@ -359,26 +354,26 @@ public class Command {
      * However, it does not immediately switch to the newly created branch;
      * print error message if new branch name already exists. */
     public void branch(Container container) {
-        if (container.branchMap.keySet().contains(argu[0])) {
+        if (container.branchMap.keySet().contains(argument[0])) {
             System.out.println("A branch with that name already exists.");
             return;
         }
-        container.branchMap.put(argu[0], container.currPointer);
+        container.branchMap.put(argument[0], container.currCommit);
     }
 
     /* Remove the branch pointer (delete it from the branchMap);
      * prints error message if the branch name doesn't exist
      * or the indicated branch is the current branch. */
     public void rmbranch(Container container) {
-        if (!container.branchMap.keySet().contains(argu[0])) {
+        if (!container.branchMap.keySet().contains(argument[0])) {
             System.out.println("A branch with that name does not exist.");
             return;
         }
-        if (container.currBranch.equals(argu[0])) {
+        if (container.currBranch.equals(argument[0])) {
             System.out.println("Cannot remove the current branch.");
             return;
         }
-        container.branchMap.remove(argu[0]);
+        container.branchMap.remove(argument[0]);
     }
 
     /* checkout -- [file name]: Takes the version of the file as it exists
@@ -386,15 +381,15 @@ public class Command {
      * overwriting the version of the file that is already there if there is one.
      * The new version of the file should not be staged. */
     public void checkout1(Container container) throws IOException {
-        if (!container.currPointer.filesMap.containsKey(argu[1])) {
+        if (!container.currCommit.filesMap.containsKey(argument[1])) {
             System.out.println("File does not exist in that commit.");
             return;
         }
         File toCheckout = null;
-        for (String filename : container.currPointer.filesMap.keySet()) {
-            if (filename.equals(argu[1])) {
+        for (String filename : container.currCommit.filesMap.keySet()) {
+            if (filename.equals(argument[1])) {
                 // toCheckout = Utils.join(GITLETDIR, container.currPointer.filesMap.get(filename));
-                toCheckout = new File(GITLETDIR, container.currPointer.filesMap.get(filename));
+                toCheckout = new File(GITLETDIR, container.currCommit.filesMap.get(filename));
                 break;
             }
         }
@@ -405,7 +400,7 @@ public class Command {
             File curDir = new File(System.getProperty("user.dir"));
 
             // append current file name to the working directory
-            File checkedFile = new File(curDir, argu[1]);
+            File checkedFile = new File(curDir, argument[1]);
 
             // create a new empty file inside current new file
             checkedFile.createNewFile();
@@ -422,8 +417,8 @@ public class Command {
      * overwriting the version of the file that is already there if there is one.
      * The new version should not be staged.*/
     public void checkout2(Container container) throws IOException {
-        String id = argu[0];
-        String fileName = argu[2];
+        String id = argument[0];
+        String fileName = argument[2];
 
         if (id.length() < 6 || id.length() > 40) {
             System.out.println("No commit with that id exists.");
@@ -450,7 +445,7 @@ public class Command {
 
         File toCheckout = null;
         for (String filename : container.commitMap.get(id).filesMap.keySet()) {
-            if (filename.equals(argu[2])) {
+            if (filename.equals(argument[2])) {
                 toCheckout = new File(GITLETDIR,
                         container.commitMap.get(id).filesMap.get(filename));
                 break;
@@ -465,7 +460,7 @@ public class Command {
             File curDir = new File(System.getProperty("user.dir"));
 
             // append current file name to the working directory
-            File checkedFile = new File(curDir, argu[2]);
+            File checkedFile = new File(curDir, argument[2]);
 
             // create a new empty file inside current new file
             checkedFile.createNewFile();
@@ -488,11 +483,11 @@ public class Command {
         checked-out branch is the current branch
     */
     public void checkout3(Container container) throws IOException {
-        String branchName = argu[0];
+        String branchName = argument[0];
         if (!container.branchMap.containsKey(branchName)) {
             System.out.println("No such branch exists.");
             return;
-        } else if (container.branchMap.get(branchName).equals(container.currPointer)) {
+        } else if (container.branchMap.get(branchName).equals(container.currCommit)) {
             System.out.println("No need to checkout the current branch.");
             return;
         }
@@ -503,7 +498,7 @@ public class Command {
             wDname.add(f.getName());
         }
         for (String fName : container.branchMap.get(branchName).filesMap.keySet()) {
-            if (!container.currPointer.filesMap.containsKey(fName) && wDname.contains(fName)
+            if (!container.currCommit.filesMap.containsKey(fName) && wDname.contains(fName)
                     && (!container.branchMap.get(branchName).filesMap.get(fName)
                     .equals(Utils.sha1(Utils.readContents(new File(curDir, fName)))))) {
                 System.out.println("There is an untracked file in "
@@ -511,7 +506,7 @@ public class Command {
                 return;
             }
         }
-        for (String fName : container.currPointer.filesMap.keySet()) {
+        for (String fName : container.currCommit.filesMap.keySet()) {
             if (wDname.contains(fName) && !container.branchMap
                     .get(branchName).filesMap.containsKey(fName)) {
                 File toDelete = new File(curDir, fName);
@@ -534,7 +529,7 @@ public class Command {
             container.stagingArea.clear();
         }
         // set given branch to current branch
-        container.currPointer = container.branchMap.get(branchName);
+        container.currCommit = container.branchMap.get(branchName);
         container.currBranch = branchName;
     }
 
@@ -544,11 +539,11 @@ public class Command {
 
     public void checkout(Container container) {
         try {
-            if (argu.length == 1) {
+            if (argument.length == 1) {
                 checkout3(container);
-            } else if (argu.length == 2 && argu[0].equals("--")) {
+            } else if (argument.length == 2 && argument[0].equals("--")) {
                 checkout1(container);
-            } else if (argu.length == 3 && argu[1].equals("--")) {
+            } else if (argument.length == 3 && argument[1].equals("--")) {
                 checkout2(container);
             } else {
                 System.out.println("Incorrect operands.");
@@ -571,7 +566,7 @@ public class Command {
     The command is essentially checkout of an arbitrary commit
     that also changes the current branch head pointer.*/
     public void reset(Container container) {
-        String id = argu[0];
+        String id = argument[0];
         int len = id.length();
         Commit correspCommit = null;
         if (len < 40 && len >= 6) {
@@ -595,8 +590,8 @@ public class Command {
         container.branchMap.put(container.currBranch, correspCommit);
         Command newCommand = new Command(new String[]{"checkout", container.currBranch});
         newCommand.execute(container);
-        container.currPointer = correspCommit;
-        container.branchMap.put(container.currBranch, container.currPointer);
+        container.currCommit = correspCommit;
+        container.branchMap.put(container.currBranch, container.currCommit);
         container.stagingArea.clear();
     }
 
@@ -639,14 +634,14 @@ public class Command {
             System.out.println("Cannot merge a branch with itself.");
             return false;
         }
-        if (!container.stagingArea.isEmpty() || !container.recentUntracked.isEmpty()) {
+        if (!container.stagingArea.isEmpty() || !container.untracked.isEmpty()) {
             System.out.println("You have uncommitted changes.");
             return false;
         }
         return true;
     }
     public void merge(Container container) {
-        String givenBranch = argu[0];
+        String givenBranch = argument[0];
         Commit other = container.branchMap.get(givenBranch);
         ArrayList<String> modifiedOther = new ArrayList<>();
         ArrayList<String> modifiedMaster = new ArrayList<>();
@@ -654,7 +649,7 @@ public class Command {
         if (!preMergeChecker(other, givenBranch, container)) {
             return;
         }
-        Commit splitPoint = container.ancestor2(container.currPointer, other);
+        Commit splitPoint = container.ancestor2(container.currCommit, other);
         File curDir = new File(System.getProperty("user.dir"));
         File[] fileList = curDir.listFiles();
         ArrayList<String> wDname = new ArrayList<>();
@@ -662,7 +657,7 @@ public class Command {
             wDname.add(f.getName());
         }
         for (String fName : other.filesMap.keySet()) {
-            if (!container.currPointer.filesMap.containsKey(fName) && wDname.contains(fName)
+            if (!container.currCommit.filesMap.containsKey(fName) && wDname.contains(fName)
                     && (!other.filesMap.get(fName)
                     .equals(Utils.sha1(Utils.readContents(new File(curDir, fName)))))) {
                 System.out.println("There is an untracked file in "
@@ -674,9 +669,9 @@ public class Command {
             System.out.println("Given branch is an ancestor of the current branch.");
             return;
         }
-        if (splitPoint == container.currPointer) {
-            container.currPointer = other;
-            container.branchMap.put(container.currBranch, container.currPointer);
+        if (splitPoint == container.currCommit) {
+            container.currCommit = other;
+            container.branchMap.put(container.currBranch, container.currCommit);
             System.out.println("Current branch fast-forwarded.");
             return;
         }
@@ -686,7 +681,7 @@ public class Command {
                 if (modifiedMaster.contains(fname)) {
                     conflict = true;
                     conflictHelper(other.filesMap.get(fname),
-                            container.currPointer.filesMap.get(fname), container, fname);
+                            container.currCommit.filesMap.get(fname), container, fname);
                 } else {
                     try {
                         String sha = other.filesMap.get(fname);
@@ -696,8 +691,8 @@ public class Command {
                         File historyFile = new File(GITLETDIR, sha);
                         byte[] saByte = Utils.readContents(historyFile);
                         Utils.writeContents(saFile, saByte);
-                        Command newCommand = new Command(new
-                                String[]{"checkout", other.id, "--", fname});
+                        String[] message = new String[]{"checkout", other.id, "--", fname};
+                        Command newCommand = new Command(message);
                         newCommand.execute(container);
                     } catch (IOException e) {
                         return;
@@ -707,7 +702,7 @@ public class Command {
                 if (modifiedMaster.contains(fname)) {
                     conflict = true;
                     conflictHelper(other.filesMap.get(fname),
-                            container.currPointer.filesMap.get(fname), container, fname);
+                            container.currCommit.filesMap.get(fname), container, fname);
                 }
                 if (!modifiedMaster.contains(fname)) {
                     File currDir = new File(System.getProperty("user.dir"), fname);
@@ -722,7 +717,7 @@ public class Command {
             newCommand.execute(container);
         } else {
             System.out.println("Encountered a merge conflict.");
-            container.recentUntracked.clear();
+            container.untracked.clear();
         }
     }
     private void mergeHelper(ArrayList<String> katherine, ArrayList<String> amanda,
@@ -733,9 +728,9 @@ public class Command {
                 amanda.add(fname);
             }
         }
-        for (String fname : david.currPointer.filesMap.keySet()) {
+        for (String fname : david.currCommit.filesMap.keySet()) {
             if (!zuojun.filesMap.keySet().contains(fname)
-                    || !zuojun.filesMap.get(fname).equals(david.currPointer.filesMap.get(fname))) {
+                    || !zuojun.filesMap.get(fname).equals(david.currCommit.filesMap.get(fname))) {
                 katherine.add(fname);
             }
         }

@@ -2,9 +2,11 @@ package gitlet;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.io.Serializable;
 
+// A commit consists of a log message, timestamp, a mapping of file names to blob references, and a single parent reference.
 public class Commit implements Serializable {
     /* The commit message (metadata). */
     public String message;
@@ -15,27 +17,21 @@ public class Commit implements Serializable {
     /* Parent commit of the current commit. */
     public Commit parent;
 
-    /* Siblings' id of the commit object. */
-    public ArrayList<String> sibling;
-
     /* List of Blob objects that stores the content. */
     public ArrayList<File> files;
 
-    /* A map whose key is the filename, and the value is it corresponding sha id.*/
-    public Map<String, String> filesMap;
+    /* Maps commit's file names to sha ids.*/
+    public HashMap<String, String> filesMap;
 
     /* SHA-id of the commit. */
     public String id;
 
     /* Construct a commit object using known information
      * and generate its as well as its files' SHA-id . */
-    public Commit(String message, String timeStamp, Commit parent,
-                  ArrayList<String> sibling, ArrayList<File> files, Map filesMap, String id) {
+    public Commit(String message, String timeStamp, Commit parent, HashMap<String, String> filesMap, String id) {
         this.message = message;
         this.timeStamp = timeStamp;
         this.parent = parent;
-        this.sibling = sibling;
-        this.files = files;
         this.filesMap = filesMap;
         this.id = id;
     }
@@ -60,13 +56,19 @@ public class Commit implements Serializable {
         return files;
     }
 
-    /* Returns the commit id. */
-    public String getID() {
+    /* Returns the sha-id of the commit. */
+    public String getCommitID() {
         return id;
     }
 
-    /* Returns the commit id. */
-    public String latestID(String filename) {
+
+    /* Checks if the commit contains the file */
+    public boolean checkFile(String filename) {
+        return filesMap.containsKey(filename);
+    }
+
+    /* Returns the sha-id of the file. */
+    public String getFileID(String filename) {
         return filesMap.get(filename);
     }
 
