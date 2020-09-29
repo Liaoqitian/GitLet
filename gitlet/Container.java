@@ -19,22 +19,22 @@ public class Container implements Serializable {
     public String currBranch;
 
     /* Maps branch name to its head commit. */
-    public Map<String, Commit> branchMap;
+    public HashMap<String, Commit> branchMap;
 
     /* An arraylist of committed objects. */
     public ArrayList<Commit> committed;
 
     /* Maps SHA-1 to commit object. */
-    public Map<String, Commit> commitMap;
+    public HashMap<String, Commit> commitMap;
 
     /* Maps file name of staged files to SHA-1. */
-    public Map<String, String> stagingArea;
+    public HashMap<String, String> stagingArea;
 
     /* Maps SHA-1 to file name. */
-    public Map<String, String> shaNameMap;
+    public HashMap<String, String> shaNameMap;
 
     /* A set of file names that are untracked. */
-    public Set<String> untracked;
+    public HashSet<String> untracked;
 
     public Commit firstCommit;
 
@@ -142,7 +142,7 @@ public class Container implements Serializable {
     /* Find the split point of two Commit objects,
      * assuming that the two commit objects are in different
      * branches and are not necessarily first cousins. */
-    public Commit ancestor2(Commit c1, Commit c2) {
+    public Commit ancestor(Commit c1, Commit c2) {
         Commit tempC1 = c1;
         Commit tempC2 = c2;
         int count1 = 0;
